@@ -1,0 +1,161 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D75C9340-06D2-4412-B787-954147BA50AB}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>SampleEngine</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(ProjectDir)bin\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)_dbg</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(ProjectDir)bin\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(Configuration)\</IntDir>
+    <TargetName>EngineDemo</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <TargetName>EngineDemo</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>AEX_DLL_EXPORT;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)extern/aexmath/</AdditionalIncludeDirectories>
+      <PrecompiledHeaderFile>$(ProjectDir)src\Engine\AEX.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)extern\GL\;$(ProjectDir)extern\aexmath\lib\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Opengl32.lib;Shlwapi.lib;aexmath_d.lib;glew32d.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>call pbe.bat</Command>
+    </PostBuildEvent>
+    <Lib>
+      <AdditionalLibraryDirectories>$(ProjectDir)extern\GL\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Opengl32.lib;glew32d.lib;</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)extern/aexmath/</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(ProjectDir)extern\GL\;$(ProjectDir)extern\aexmath\lib\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Opengl32.lib;Shlwapi.lib;glew32.lib;aexmath.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>call pbe.bat</Command>
+    </PostBuildEvent>
+    <Lib />
+    <Lib />
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Demos\Simple Demo\SimpleDemo.cpp" />
+    <ClCompile Include="src\Engine\AEX.cpp" />
+    <ClCompile Include="src\Engine\Core\AEXRtti.cpp" />
+    <ClCompile Include="src\Engine\Debug\CheckGLError.cpp" />
+    <ClCompile Include="src\Engine\Debug\MyDebug.cpp" />
+    <ClCompile Include="src\Engine\Graphics\AEXColor.cpp" />
+    <ClCompile Include="src\Engine\Graphics\AEXGfxSystem.cpp" />
+    <ClCompile Include="src\Engine\Graphics\AEXModel.cpp" />
+    <ClCompile Include="src\Engine\Graphics\AEXShader.cpp" />
+    <ClCompile Include="src\Engine\Graphics\AEXTexture.cpp" />
+    <ClCompile Include="src\Engine\Graphics\AEXTextureSampler.cpp" />
+    <ClCompile Include="src\Engine\Graphics\AEXVertex.cpp" />
+    <ClCompile Include="src\Engine\Platform\AEXFilePath.cpp" />
+    <ClCompile Include="src\Engine\Platform\AEXInput.cpp" />
+    <ClCompile Include="src\Engine\Platform\AEXOpenSaveFile.cpp" />
+    <ClCompile Include="src\Engine\Platform\AEXTime.cpp" />
+    <ClCompile Include="src\Engine\Platform\AEXWindow.cpp" />
+    <ClCompile Include="src\Demos\Main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Demos\Simple Demo\SimpleDemo.h" />
+    <ClInclude Include="src\Engine\AEX.h" />
+    <ClInclude Include="src\Engine\Core\AEXBase.h" />
+    <ClInclude Include="src\Engine\Core\AEXCore.h" />
+    <ClInclude Include="src\Engine\Core\AEXDataTypes.h" />
+    <ClInclude Include="src\Engine\Core\AEXRtti.h" />
+    <ClInclude Include="src\Engine\Core\AEXSystem.h" />
+    <ClInclude Include="src\Engine\Debug\CheckGLError.h" />
+    <ClInclude Include="src\Engine\Debug\MyDebug.h" />
+    <ClInclude Include="src\Engine\Graphics\AEXColor.h" />
+    <ClInclude Include="src\Engine\Graphics\AEXGfxSystem.h" />
+    <ClInclude Include="src\Engine\Graphics\AEXGL.h" />
+    <ClInclude Include="src\Engine\Graphics\AEXGraphics.h" />
+    <ClInclude Include="src\Engine\Graphics\AEXModel.h" />
+    <ClInclude Include="src\Engine\Graphics\AEXShader.h" />
+    <ClInclude Include="src\Engine\Graphics\AEXTexture.h" />
+    <ClInclude Include="src\Engine\Graphics\AEXTextureSampler.h" />
+    <ClInclude Include="src\Engine\Graphics\AEXVertex.h" />
+    <ClInclude Include="src\Engine\Logic\AEXGameState.h" />
+    <ClInclude Include="src\Engine\Platform\AEXFilePath.h" />
+    <ClInclude Include="src\Engine\Platform\AEXInput.h" />
+    <ClInclude Include="src\Engine\Platform\AEXOpenSaveFile.h" />
+    <ClInclude Include="src\Engine\Platform\AEXPlatform.h" />
+    <ClInclude Include="src\Engine\Platform\AEXTime.h" />
+    <ClInclude Include="src\Engine\Platform\AEXWindow.h" />
+    <ClInclude Include="src\Engine\Utilities\AEXContainers.h" />
+    <ClInclude Include="src\Engine\Utilities\AEXUtils.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
