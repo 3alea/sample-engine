@@ -76,6 +76,9 @@
     <ClCompile Include="src\Engine\Logic\AEXLogic.cpp">
       <Filter>Engine\Logic</Filter>
     </ClCompile>
+    <ClCompile Include="src\Demos\JsonDemo\JsonDemo.cpp">
+      <Filter>Demos\Json Demo</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Engine\Core\AEXBase.h">
@@ -181,6 +184,9 @@
       <Filter>Engine\Graphics\Components</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\Logic\AEXLogic.h" />
+    <ClInclude Include="src\Demos\JsonDemo\JsonDemo.h">
+      <Filter>Demos\Json Demo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Engine">
@@ -236,6 +242,9 @@
     </Filter>
     <Filter Include="Engine\Scene">
       <UniqueIdentifier>{6aad3496-21fa-476d-a1c7-1d4ca1aeb41c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Demos\Json Demo">
+      <UniqueIdentifier>{55bf48d3-cb9f-4d61-a185-010a3b73b598}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -1,1 +1,7 @@
 .vs
+/current/*.opendb
+/current/*.db
+/current/obj
+/current/.vs
+/current/bin
+/current/SampleEngine.vcxproj.user

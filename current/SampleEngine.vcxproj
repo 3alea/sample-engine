@@ -104,6 +104,7 @@
     <Lib />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Demos\JsonDemo\JsonDemo.cpp" />
     <ClCompile Include="src\Demos\Simple Demo\SimpleDemo.cpp" />
     <ClCompile Include="src\Engine\AEX.cpp" />
     <ClCompile Include="src\Engine\Composition\AEXComponent.cpp" />
@@ -134,6 +135,7 @@
     <ClCompile Include="src\Engine\Scene\AEXTransformComp.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Demos\JsonDemo\JsonDemo.h" />
     <ClInclude Include="src\Demos\Simple Demo\SimpleDemo.h" />
     <ClInclude Include="src\Engine\AEX.h" />
     <ClInclude Include="src\Engine\Composition\AEXComponent.h" />
