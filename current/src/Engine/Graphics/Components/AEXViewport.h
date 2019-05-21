@@ -1,7 +1,7 @@
 #pragma once
 
 #include <aexmath\AEXMath.h>
-#include "AEXColor.h"
+#include "..\AEXColor.h"
 namespace AEX
 {
 	class Viewport

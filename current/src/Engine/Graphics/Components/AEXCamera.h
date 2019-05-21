@@ -1,14 +1,19 @@
 #ifndef CS200_CAMERA2D_H_
 #define CS200_CAMERA2D_H_
 
+#include "..\..\Core\AEXDataTypes.h"
+#include "..\..\Composition\AEXComponent.h"
 #include <aexmath\AEXMath.h>
 #include "AEXViewport.h"
 
+
 namespace AEX
 {
-	class  Camera: public IBase
+	class TransformComp3D;
+
+	class  Camera: public IComp
 	{
-		AEX_RTTI_DECL(Camera, IBase);
+		AEX_RTTI_DECL(Camera, IComp);
 
 	public:
 		enum EProjectionType {ePT_Orthographic, ePT_Perspective};

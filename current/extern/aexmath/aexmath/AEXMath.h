@@ -13,7 +13,7 @@
 
 #include <math.h>
 #include <random>
-#include "..\Core\AEXDataTypes.h"
+#include <src\Engine\Core\AEXDataTypes.h>
 #include "AEXMathDLL.h"
 #include "AEXMathDefs.h"
 #include "AEXMath.inl"

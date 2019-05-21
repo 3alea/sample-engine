@@ -10,14 +10,11 @@
 #include "AEXGameObject.h"
 namespace AEX
 {
-	// RTTI
-	AEX_RTTI_IMPL(IComp, IBase);
-
 	// ----------------------------------------------------------------------------
 	// Constructors
 	IComp::IComp()
 		: mOwner(NULL)
-		, mbIsEnabled(true)
+		, mbEnabled(true)
 	{}
 	IComp::~IComp()
 	{}
@@ -41,10 +38,10 @@ namespace AEX
 	// ----------------------------------------------------------------------------
 	bool IComp::IsEnabled()
 	{
-		return mbIsEnabled;
+		return mbEnabled;
 	}
 	void IComp::SetEnabled(bool enabled)
 	{
-		mbIsEnabled = enabled;
+		mbEnabled = enabled;
 	}
 }

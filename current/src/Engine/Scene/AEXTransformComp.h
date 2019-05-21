@@ -4,13 +4,11 @@
 #include <aexmath\AEXMath.h>
 #include "..\Composition\AEXComponent.h"
 
-#pragma warning (disable:4251) // dll and STL
 namespace AEX
 {
-	class AEX_API TransformComp : public IComp
+	class TransformComp : public IComp
 	{
-		AEX_RTTI_DECL;
-		AEX_CONTAINERS(TransformComp);
+		AEX_RTTI_DECL(TransformComp, IComp);
 
 	public:
 		TransformComp();
@@ -31,23 +29,16 @@ namespace AEX
 		void SetPosition(const AEVec2 & pos);
 		void SetPosition3D(const AEVec3 & posZorder);
 		void SetScale(const AEVec2 & scale);
-
-		// --------------------------------------------------------------------
-		#pragma region// SERIALIZATION
-		virtual void StreamRead(ISerializer * serializer);
-		virtual void StreamWrite(ISerializer * serializer);
-		#pragma endregion
-
+		
 		// Data
 	public:
 		Transform mLocal;
 	};
 
 
-	class AEX_API TransformComp3D : public IComp
+	class TransformComp3D : public IComp
 	{
-		AEX_RTTI_DECL;
-		AEX_CONTAINERS(TransformComp3D);
+		AEX_RTTI_DECL(TransformComp3D, IComp);
 
 	public:
 		TransformComp3D();
@@ -67,18 +58,11 @@ namespace AEX
 		void SetScale(const AEVec3 & scale);
 		void SetScale(f32 sx, f32 sy, f32 sz);
 		void SetScale(f32 sc);
-
-		// --------------------------------------------------------------------
-#pragma region// SERIALIZATION
-		virtual void StreamRead(ISerializer * serializer);
-		virtual void StreamWrite(ISerializer * serializer);
-#pragma endregion
-
+		
 		// Data
 	public:
 		Transform3D mLocal;
 	};
 }
-#pragma warning (default:4251) // dll and STL
 
 #endif

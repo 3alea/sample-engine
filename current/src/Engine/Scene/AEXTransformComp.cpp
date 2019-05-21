@@ -1,12 +1,9 @@
 #include "AEXTransformComp.h"
-#include "..\Utilities\AEXSerializer.h"
 
 namespace AEX
 {
 	// --------------------------------------------------------------------
 	#pragma region// TRANSFORM2D
-
-	AEX_RTTI_IMPL(TransformComp, IComp);
 
 	// --------------------------------------------------------------------
 	TransformComp::TransformComp()
@@ -92,7 +89,6 @@ namespace AEX
 		AEMtx44 rot_mtx = AEMtx44::RotateXYZ(0, 0, mLocal.mOrientation);
 		AEMtx44 trans_mtx = AEMtx44::Translate(mLocal.mTranslationZ.x, mLocal.mTranslationZ.y, mLocal.mTranslationZ.z);
 		return (trans_mtx * rot_mtx * scale_mtx);
-		//return mLocal.GetMatrix(); 
 	}
 	// --------------------------------------------------------------------
 	AEMtx44 TransformComp::GetWorldToModel4x4()
@@ -101,26 +97,13 @@ namespace AEX
 		AEMtx44 rot_mtx = AEMtx44::RotateXYZ(0, 0, -mLocal.mOrientation);
 		AEMtx44 trans_mtx = AEMtx44::Translate(-mLocal.mTranslationZ.x, -mLocal.mTranslationZ.y, -mLocal.mTranslationZ.z);
 		return(scale_mtx*rot_mtx*trans_mtx);
-		//return mLocal.GetInvMatrix();
 	}
-	// --------------------------------------------------------------------
-	void TransformComp::StreamRead(ISerializer * serializer)
-	{
-		// read the local transform 
-		serializer->StreamRead("Local", mLocal);
-	}
-	// --------------------------------------------------------------------
-	void TransformComp::StreamWrite(ISerializer * serializer)
-	{
-		// write the local transform
-		serializer->StreamWrite("Local", mLocal);
-	}
+
 
 	#pragma endregion
 
 	// --------------------------------------------------------------------
 	#pragma region// TRANSFORM3D
-	AEX_RTTI_IMPL(TransformComp3D, IComp);
 
 	// --------------------------------------------------------------------
 	TransformComp3D::TransformComp3D()
@@ -200,18 +183,6 @@ namespace AEX
 	void TransformComp3D::SetScale(f32 sc)
 	{
 		mLocal.scale = AEVec3(sc, sc, sc);
-	}
-	// --------------------------------------------------------------------
-	void TransformComp3D::StreamRead(ISerializer * serializer)
-	{
-		// read the local transform 
-		serializer->StreamRead("Local", mLocal);
-	}
-	// --------------------------------------------------------------------
-	void TransformComp3D::StreamWrite(ISerializer * serializer)
-	{
-		// write the local transform
-		serializer->StreamWrite("Local", mLocal);
 	}
 
 	#pragma endregion

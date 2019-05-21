@@ -14,10 +14,9 @@
 #pragma warning (disable:4251) // dll and STL
 namespace AEX
 {
-	class AEX_API GameObject : public IComp
+	class GameObject : public IBase
 	{
-		// Base stuff
-		AEX_RTTI_DECL;		// RTTI
+		AEX_RTTI_DECL(GameObject, IBase);
 
 	public:
 
@@ -32,10 +31,10 @@ namespace AEX
 		#pragma region// COMPONENT MANAGEMENT
 
 		// Getters
-		int GetCompCount();
-		IComp* GetComp(int index);
+		u32 GetCompCount();
+		IComp* GetComp(u32 index);
 		IComp* GetComp(const char * type);
-		IComp* GetComp(const AEXRtti & type);
+		IComp* GetComp(const Rtti & type);
 		IComp* GetCompName(const char * compName, const char *compType = NULL);
 
 		// template
@@ -45,32 +44,33 @@ namespace AEX
 		template<class T>
 		T* GetCompDerived(const char * name = NULL);
 
+		template<typename T>
+		T * NewComp(const char * name = NULL);
+
 		// Add/Remove by address
-		void AddComp(IComp * pComp);
+		IComp* AddComp(IComp * pComp);
 		void RemoveComp(IComp * pComp);
 
 		// Removes first component encoutered that match the search criteria
 		void RemoveCompType(const char * compType);
-		void RemoveCompType(const AEXRtti & compType);
+		void RemoveCompType(const Rtti & compType);
 		void RemoveCompName(const char * compName, const char * compType = NULL);
 
 		// Removes all components encoutered that match the search criteria
 		void RemoveAllCompType(const char * compType);
-		void RemoveAllCompType(const AEXRtti & compType);
+		void RemoveAllCompType(const Rtti & compType);
 		void RemoveAllCompName(const char * compName, const char * compType = NULL);
 
 		// Remove all components
 		void RemoveAllComp();
-		#pragma endregion
 
-		// --------------------------------------------------------------------
-		#pragma region// SERIALIZATION
-		virtual void StreamRead(ISerializer * serializer);
-		virtual void StreamWrite(ISerializer * serializer);
-		#pragma endregion
+
+		// debug only!!
+		std::vector<IComp*> &GetComps() { return mComps; }
 
 	protected:
 		AEX_PTR_ARRAY(IComp) mComps;
+		bool mbEnabled;
 	};
 
 	template<class T>
@@ -79,7 +79,7 @@ namespace AEX
 		// go throught the components and look for the same type
 		for (auto it = mComps.begin(); it != mComps.end(); ++it)
 		{
-			if ((*it)->GetType().IsExactly(T::TYPE))
+			if ((*it)->GetType().IsExactly(T::TYPE()))
 			{
 				// not same name -> continue
 				if (compName && strcmp(compName, (*it)->GetName()) != 0)
@@ -98,7 +98,7 @@ namespace AEX
 		// go throught the components and look for the same type
 		for (auto it = mComps.begin(); it != mComps.end(); ++it)
 		{
-			if ((*it)->GetType().IsDerived(T::TYPE))
+			if ((*it)->GetType().IsDerived(T::TYPE()))
 			{
 				// not same name -> continue
 				if (compName && strcmp(compName, (*it)->GetName()) != 0)
@@ -110,6 +110,14 @@ namespace AEX
 			}
 		}
 		return NULL; // not found
+	}
+
+	template<typename T>
+	T * GameObject::NewComp(const char * compName) {
+		T* newComp = new T;
+		if (compName)
+			newComp->SetName(compName);
+		return dynamic_cast<T*>(AddComp(newComp));
 	}
 }
 #pragma warning (default:4251) // dll and STL

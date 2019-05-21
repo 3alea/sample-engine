@@ -55,6 +55,27 @@
     <ClCompile Include="src\Demos\Simple Demo\SimpleDemo.cpp">
       <Filter>Demos\Simple Demo</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\Composition\AEXComponent.cpp">
+      <Filter>Engine\Composition</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Composition\AEXGameObject.cpp">
+      <Filter>Engine\Composition</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Graphics\Components\AEXCamera.cpp">
+      <Filter>Engine\Graphics\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Graphics\Components\AEXRenderable.cpp">
+      <Filter>Engine\Graphics\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Scene\AEXTransformComp.cpp">
+      <Filter>Engine\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Graphics\Components\AEXViewport.cpp">
+      <Filter>Engine\Graphics\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Logic\AEXLogic.cpp">
+      <Filter>Engine\Logic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Engine\Core\AEXBase.h">
@@ -138,6 +159,28 @@
     <ClInclude Include="src\Demos\Simple Demo\SimpleDemo.h">
       <Filter>Demos\Simple Demo</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\Composition\AEXComponent.h">
+      <Filter>Engine\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Composition\AEXComposition.h">
+      <Filter>Engine\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Composition\AEXGameObject.h">
+      <Filter>Engine\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Graphics\Components\AEXCamera.h">
+      <Filter>Engine\Graphics\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Graphics\Components\AEXRenderable.h">
+      <Filter>Engine\Graphics\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Scene\AEXTransformComp.h">
+      <Filter>Engine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Graphics\Components\AEXViewport.h">
+      <Filter>Engine\Graphics\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Logic\AEXLogic.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Engine">
@@ -184,6 +227,15 @@
     </Filter>
     <Filter Include="Demos\Simple Demo">
       <UniqueIdentifier>{cb10106b-50ec-4198-8d5c-0ee054817525}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Composition">
+      <UniqueIdentifier>{9d4323fc-fa5a-48c5-a281-d57fce540145}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Graphics\Components">
+      <UniqueIdentifier>{46151f53-439d-4833-8a6c-895d70cb69a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Scene">
+      <UniqueIdentifier>{6aad3496-21fa-476d-a1c7-1d4ca1aeb41c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -4,9 +4,13 @@
 #include "Debug\MyDebug.h"
 #include "Core\AEXCore.h"
 #include "Platform\AEXPlatform.h"
+#include "Composition\AEXComposition.h"
+#include "Scene\AEXTransformComp.h"
 #include "Logic\AEXGameState.h"
+#include "Logic\AEXLogic.h"
 #include "Graphics\AEXGraphics.h"
 #include "Utilities\AEXUtils.h"
+
 
 // Easy access to singleton
 #define aexEngine (AEX::AEXEngine::Instance())

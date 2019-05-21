@@ -1,10 +1,9 @@
 #include "AEXRenderable.h"
-#include "..\Graphics\AEXGraphics.h"
-#include "..\Composition\AEXGameObject.h"
-#include "..\Scene\AEXTransformComp.h"
-#include "..\Utilities\AEXSerializer.h"
-#include "..\Debug\MyDebug.h"
-#include "AEXGL.h"
+#include "..\AEXGraphics.h"
+#include "..\..\Composition\AEXGameObject.h"
+#include "..\..\Scene\AEXTransformComp.h"
+#include "..\..\Debug\MyDebug.h"
+#include "..\AEXGL.h"
 
 namespace AEX
 {
@@ -29,11 +28,13 @@ namespace AEX
 			pTransform = GetOwner()->GetComp<TransformComp>();
 			pTransform3D = GetOwner()->GetComp<TransformComp3D>();
 		}
-		Graphics::Instance()->AddRenderable(this);
+		// Add self to graphics system. TODO(Thomas): Implement this in the next lesson
+		//Graphics::Instance()->AddRenderable(this);
 	}
 	void Renderable::Shutdown()
 	{
-		Graphics::Instance()->RemoveRenderable(this);
+		// Add self to graphics system. TODO(Thomas): Implement this in the next lesson
+		//Graphics::Instance()->RemoveRenderable(this);
 	}
 
 	void Renderable::Render()

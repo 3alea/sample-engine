@@ -1,8 +1,8 @@
 #include "AEXCamera.h"
 #include "AEXViewport.h"
-#include "AEXGraphics.h"
-#include "..\Composition\AEXGameObject.h"
-#include "..\Utilities\AEXSerializer.h"
+#include "..\AEXGraphics.h"
+#include "..\..\Composition\AEXGameObject.h"
+#include "..\..\Scene\AEXTransformComp.h"
 #include <aexmath\AEXMath.h>
 namespace AEX
 {
@@ -24,14 +24,14 @@ namespace AEX
 	Camera::~Camera()
 	{
 		// remove from graphics
-		Graphics::Instance()->RemoveCamera(this);
+		Shutdown();
 	}
 
 	// ------------------------------------------------------------------------
 	void Camera::Initialize()
 	{
-		// add self to graphics 
-		Graphics::Instance()->AddCamera(this);
+		// add self to graphics - TODO(Thomas): Implement this for next lesson
+		// aexGraphics->AddCamera(this);
 
 		// get the transform component
 		mTransform = GetOwner()->GetComp<TransformComp3D>();
@@ -40,7 +40,8 @@ namespace AEX
 	// ------------------------------------------------------------------------
 	void Camera::Shutdown()
 	{
-		Graphics::Instance()->RemoveCamera(this);
+		// Remove selef from graphics - TODO(Thomas): Implement this for next lesson
+		//aexGraphics->RemoveCamera(this);
 	}
 
 	// ------------------------------------------------------------------------

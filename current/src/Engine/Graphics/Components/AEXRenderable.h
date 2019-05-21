@@ -3,7 +3,7 @@
 #define AEX_RENDERABLE_H_
 // ----------------------------------------------------------------------------
 
-
+#include "..\..\Composition\AEXComponent.h"
 namespace AEX
 {
 	class TransformComp;
@@ -18,9 +18,9 @@ namespace AEX
 	// PURPOSE:	A renderable is any object that can be processed by the rendering
 	//			pipeline. Most importantly, it can be culled by the camera.
 	//			Note: The renderable needs to have a transform
-	class Renderable : IBase
+	class Renderable : IComp
 	{
-		AEX_RTTI_DECL(Renderable, IBase);
+		AEX_RTTI_DECL(Renderable, IComp);
 	public:
 
 	public:

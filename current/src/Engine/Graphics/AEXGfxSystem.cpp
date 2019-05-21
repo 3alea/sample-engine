@@ -245,6 +245,7 @@ namespace AEX
 		TerminateOpenGL();
 	}
 
+	// TODO(Thomas): Implement this for next lesson
 	//void Graphics::Render(bool clear, bool present)
 	//{
 	//	// Disable face culling for backface triangles. 

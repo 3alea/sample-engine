@@ -9,24 +9,17 @@
 #ifndef AEX_COMPONENT_H_
 #define AEX_COMPONENT_H_
 
-#include "..\Utilities\AEXContainers.h"
 #include "..\Core\AEXCore.h"
-
-// ----------------------------------------------------------------------------
-// Use this macro for rapidly adding typical component data & methods
-#define AEX_COMP_DECL(classname)\
-	AEX_RTTI_DECL;			\
-	AEX_CONTAINERS(classname);
 
 namespace AEX
 {
 	// ----------------------------------------------------------------------------
 	// \class	IComp 
 	// \brief	Base component class
-	class AEX_API IComp : public IBase
+	class IComp : public IBase
 	{
+		AEX_RTTI_DECL(IComp, IBase);
 		friend class GameObject;
-		AEX_COMP_DECL(IComp)
 
 	public:
 		IComp();
@@ -43,13 +36,10 @@ namespace AEX
 		// Gets the owner, only the gameobject class can modify this
 		GameObject* GetOwner(void);
 
-		virtual void StreamRead(ISerializer * serializer){}
-		virtual void StreamWrite(ISerializer * serializer){}
-
 	//protected:
 	public:
 		GameObject			*mOwner; // owner object
-		bool				mbIsEnabled;
+		bool				mbEnabled;
 	};
 }
 

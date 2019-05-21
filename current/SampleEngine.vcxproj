@@ -106,6 +106,8 @@
   <ItemGroup>
     <ClCompile Include="src\Demos\Simple Demo\SimpleDemo.cpp" />
     <ClCompile Include="src\Engine\AEX.cpp" />
+    <ClCompile Include="src\Engine\Composition\AEXComponent.cpp" />
+    <ClCompile Include="src\Engine\Composition\AEXGameObject.cpp" />
     <ClCompile Include="src\Engine\Core\AEXRtti.cpp" />
     <ClCompile Include="src\Engine\Debug\CheckGLError.cpp" />
     <ClCompile Include="src\Engine\Debug\MyDebug.cpp" />
@@ -116,6 +118,10 @@
     <ClCompile Include="src\Engine\Graphics\AEXTexture.cpp" />
     <ClCompile Include="src\Engine\Graphics\AEXTextureSampler.cpp" />
     <ClCompile Include="src\Engine\Graphics\AEXVertex.cpp" />
+    <ClCompile Include="src\Engine\Graphics\Components\AEXCamera.cpp" />
+    <ClCompile Include="src\Engine\Graphics\Components\AEXRenderable.cpp" />
+    <ClCompile Include="src\Engine\Graphics\Components\AEXViewport.cpp" />
+    <ClCompile Include="src\Engine\Logic\AEXLogic.cpp" />
     <ClCompile Include="src\Engine\Platform\AEXFilePath.cpp" />
     <ClCompile Include="src\Engine\Platform\AEXInput.cpp" />
     <ClCompile Include="src\Engine\Platform\AEXOpenSaveFile.cpp" />
@@ -125,10 +131,14 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\Engine\Scene\AEXTransformComp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Demos\Simple Demo\SimpleDemo.h" />
     <ClInclude Include="src\Engine\AEX.h" />
+    <ClInclude Include="src\Engine\Composition\AEXComponent.h" />
+    <ClInclude Include="src\Engine\Composition\AEXComposition.h" />
+    <ClInclude Include="src\Engine\Composition\AEXGameObject.h" />
     <ClInclude Include="src\Engine\Core\AEXBase.h" />
     <ClInclude Include="src\Engine\Core\AEXCore.h" />
     <ClInclude Include="src\Engine\Core\AEXDataTypes.h" />
@@ -145,13 +155,18 @@
     <ClInclude Include="src\Engine\Graphics\AEXTexture.h" />
     <ClInclude Include="src\Engine\Graphics\AEXTextureSampler.h" />
     <ClInclude Include="src\Engine\Graphics\AEXVertex.h" />
+    <ClInclude Include="src\Engine\Graphics\Components\AEXCamera.h" />
+    <ClInclude Include="src\Engine\Graphics\Components\AEXRenderable.h" />
+    <ClInclude Include="src\Engine\Graphics\Components\AEXViewport.h" />
     <ClInclude Include="src\Engine\Logic\AEXGameState.h" />
+    <ClInclude Include="src\Engine\Logic\AEXLogic.h" />
     <ClInclude Include="src\Engine\Platform\AEXFilePath.h" />
     <ClInclude Include="src\Engine\Platform\AEXInput.h" />
     <ClInclude Include="src\Engine\Platform\AEXOpenSaveFile.h" />
     <ClInclude Include="src\Engine\Platform\AEXPlatform.h" />
     <ClInclude Include="src\Engine\Platform\AEXTime.h" />
     <ClInclude Include="src\Engine\Platform\AEXWindow.h" />
+    <ClInclude Include="src\Engine\Scene\AEXTransformComp.h" />
     <ClInclude Include="src\Engine\Utilities\AEXContainers.h" />
     <ClInclude Include="src\Engine\Utilities\AEXUtils.h" />
   </ItemGroup>

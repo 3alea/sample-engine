@@ -4,153 +4,6 @@
 
 using namespace AEX;
 
-namespace AEX
-{
-	class IComp : public IBase
-	{
-		AEX_RTTI_DECL(IComp, IBase);
-		friend class GameObject; // friends can't touch privates
-	public: 
-		IComp() : IBase(), mOwner(NULL), mbEnabled(true) {} // do nothing for now.
-		virtual void Initialize() {}
-		virtual void Update() {}
-		virtual void Shutdown() {}
-		virtual ~IComp() {}
-
-		GameObject * GetOwner() { return mOwner; }
-
-		// TODO: 
-		void Enable(bool enabled) { mbEnabled = enabled; }
-	protected:
-		GameObject *	mOwner;		// only one owner!!
-		bool			mbEnabled;	// ENABLED OR NOT
-	};
-
-	class GameObject : public IBase
-	{
-		AEX_RTTI_DECL(GameObject, IBase);
-	public: 
-		GameObject() :IBase() {} // do nothing for now.
-		virtual void Initialize() {
-			for (u32 i = 0; i < mComponents.size(); ++i)
-				mComponents[i]->Initialize();
-		}
-		virtual void Shutdown() {
-			for (u32 i = 0; i < mComponents.size(); ++i)
-				mComponents[i]->Shutdown();
-		}
-		virtual ~GameObject() {
-			ClearComps();
-		}
-		void Enable(bool enabled){
-			for (u32 i = 0; i < mComponents.size(); ++i)
-				mComponents[i]->Enable(enabled);
-		}
-
-		// component management
-		IComp * AddComp(IComp* newComp) 
-		{
-			for (u32 i = 0; i < mComponents.size(); ++i)
-				if (mComponents[i] == newComp)
-					return newComp;
-			mComponents.push_back(newComp);
-			newComp->mOwner = this;
-			return newComp;
-		}
-		void RemoveComp(IComp * toRemove) 
-		{
-			for (u32 i = 0; i < mComponents.size(); ++i)
-				if (mComponents[i] == toRemove) {
-					delete toRemove;
-					mComponents.erase(mComponents.begin() + i);
-					return;
-				}
-		}
-		void ClearComps() {
-			while (mComponents.size()){
-				delete mComponents.back(); 
-				mComponents.pop_back();
-			}
-		}
-		IComp * GetComp(const char * compTypeName) 
-		{
-			for (u32 i = 0; i < mComponents.size(); ++i) {
-				std::string tmpType = mComponents[i]->GetType().GetName();
-				if ( tmpType == compTypeName)
-					return mComponents[i];
-			}
-		}
-		u32 GetCompCount() { return mComponents.size(); }
-
-		// debug only!!
-		std::vector<IComp*> &GetComps() { return mComponents; }
-
-	private:
-		std::vector<IComp*> mComponents;
-	public:
-
-		template<typename T>
-		T * GetComp() {
-			return dynamic_cast<T*>(GetComp(T::TYPE().GetName()));
-		}
-
-		template<typename T>
-		T * NewComp(){
-			return dynamic_cast<T*>(AddComp(new T));
-		}
-	};
-
-
-	class Logic :public ISystem
-	{
-		AEX_RTTI_DECL(Logic, ISystem);
-		AEX_SINGLETON(Logic);
-
-	public:
-		virtual void Update()
-		{
-			FOR_EACH(comp, mComps)
-				/*TODO:if((*comp)->Enabled())*/ 
-				(*comp)->Update();
-		}
-
-		// component management
-		void AddComp(IComp * logicComp){
-			mComps.remove(logicComp); // no duplicates
-			mComps.push_back(logicComp); 
-		}
-		void RemoveComp(IComp * logicComp){
-			mComps.remove(logicComp);
-		}
-		void ClearComps(){
-			mComps.clear();
-		}
-	private:
-		std::list<IComp *> mComps;
-	};
-	Logic::Logic() {}
-
-	class LogicComp : public IComp
-	{
-		AEX_RTTI_DECL(LogicComp, IComp);
-	public:
-		LogicComp() : IComp() {}
-		void Initialize() { 
-			Logic::Instance()->AddComp(this); 
-		}
-		void Shutdown() {
-			Logic::Instance()->RemoveComp(this);
-		}
-	};
-
-	class TransformComp : public IComp
-	{
-		AEX_RTTI_DECL(TransformComp, IComp);
-	public:
-		TransformComp() :IComp() {}
-		AEX::Transform mLocal;
-	};
-
 	class DummyComp : public LogicComp
 	{
 		AEX_RTTI_DECL(DummyComp, LogicComp);
@@ -171,7 +24,6 @@ namespace AEX
 		}
 	};
 
-}
 
 
 void TestGameObjects()
@@ -183,10 +35,10 @@ void TestGameObjects()
 	auto comps = go.GetComps();
 	for (u32 i = 0; i < go.GetCompCount(); ++i)
 		comps[i]->Update();
-	go.Enable(false);
+	go.SetEnabled(false);
 	for (u32 i = 0; i < go.GetCompCount(); ++i)
 		comps[i]->Update();
-	go.Enable(true);
+	go.SetEnabled(true);
 	for (u32 i = 0; i < go.GetCompCount(); ++i)
 		comps[i]->Update();
 	go.Shutdown();
