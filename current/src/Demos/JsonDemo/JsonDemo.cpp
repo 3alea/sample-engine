@@ -4,10 +4,13 @@
 #include <iostream>
 #include <fstream>
 using namespace AEX;
+using std::cout;
+using std::endl;
 
 #include "json.hpp"
 using json = nlohmann::json;
 
+#pragma region Lesson: Json 101
 void GettingStartedWithJson()
 {
 	json value;
@@ -55,7 +58,9 @@ void GettingStartedWithJson()
 		outFile.close();
 	}
 }
+#pragma endregion
 
+#pragma region Lesson: ISerializable Interface
 struct ISerializable
 {
 	virtual void ToJson(json & val) = 0;
@@ -121,7 +126,9 @@ void TestReadWriteWithJson()
 		}
 	}
 }
+#pragma endregion
 
+#pragma region Lesson: Factory System
 struct ICreator {
 	virtual IBase * Create() = 0; // pure virtual 
 };
@@ -164,6 +171,7 @@ public:
 Factory::Factory() :ISystem() {}
 #define aexFactory (Factory::Instance())
 
+#pragma region Tests
 void SaveObjectToJson(GameObject * go, json & val)
 {
 	val["name"] = go->GetName();
@@ -184,7 +192,6 @@ void SaveObjectToJson(GameObject * go, json & val)
 		comps.push_back(compVal);
 	}
 }
-
 void LoadObjectFromJson(GameObject * obj, json & val)
 {
 	obj->Shutdown(); // clear everything before loading. 
@@ -200,16 +207,13 @@ void LoadObjectFromJson(GameObject * obj, json & val)
 		obj->AddComp((IComp*)newComp);
 	}
 }
-
-// ----------------------------------------------------------------------------
-// GAMESTATE FUNCTIONS
-void JsonDemo::Initialize()
+void Test_SerializeJsonObject()
 {
+
 	aexFactory->Register<GameObject>();
 	aexFactory->Register<MyTransform>();
 	aexFactory->Register<TransformComp>();
-	
-	GameObject go; 
+	GameObject go;
 
 	// load
 	{
@@ -235,8 +239,253 @@ void JsonDemo::Initialize()
 		}
 	}
 
+}
+#pragma endregion
+#pragma endregion
+
+#pragma region Lesson(NEW): Overload Stream Operators)
+
+// overload the stream operator for json for basic types (will be useful later)
+json & operator<<(json &j, const int & val) { j = val; return j; }
+json & operator<<(json &j, const float & val) { j = val;return j; }
+json & operator<<(json &j, const double & val) { j = val;return j; }
+json & operator<<(json &j, const bool & val) { j = val; return j;}
+json & operator<<(json &j, const std::string & val) { j = val; return j;}
+
+nlohmann::json& operator<<(nlohmann::json& j, const AEX::AEVec2 & v)
+{
+	j["x"] = v.x;
+	j["y"] = v.y;
+	return j;
+}
+AEX::AEVec2& operator>>(const nlohmann::json& j, AEX::AEVec2& v)
+{
+	if (j.find("x") != j.end())
+		v.x = j["x"];
+	if (j.find("y") != j.end())
+		v.y = j["y"];
+	return v;
+}
+nlohmann::json& operator<<(nlohmann::json& j, const AEX::AEVec3 & v)
+{
+	j["x"] = v.x;
+	j["y"] = v.y;
+	j["z"] = v.z;
+	return j;
+}
+AEX::AEVec3& operator>>(const nlohmann::json& j, AEX::AEVec3& v)
+{
+	if (j.find("x") != j.end())
+		v.x = j["x"];
+	if (j.find("y") != j.end())
+		v.y = j["y"];
+	if (j.find("z") != j.end())
+		v.z = j["z"];
+	return v;
+}
+
+
+// overload the stream operator
+nlohmann::json& operator<<(nlohmann::json& j, const AEX::Transform & tr)
+{
+	j["pos"] << tr.mTranslation;
+	j["posZ"] << tr.mTranslationZ;
+	j["sca"] << tr.mScale;
+	j["rot"] = tr.mOrientation;
+	return j;
+}
+AEX::Transform& operator>>(const nlohmann::json& j, AEX::Transform& mtr)
+{
+	if (j.find("pos") != j.end())
+		j["pos"] >> mtr.mTranslation;
+	if (j.find("posZ") != j.end())
+		j["posZ"] >> mtr.mTranslationZ;
+	if (j.find("sca") != j.end())
+		j["sca"] >> mtr.mScale;
+	if (j.find("rot") != j.end())
+		mtr.mOrientation = j["rot"];
+	return mtr;
+}
+
+nlohmann::json& operator<<(nlohmann::json& j, const AEX::TransformComp& mtr)
+{
+	j["local"] << mtr.mLocal;
+	return j;
+}
+AEX::TransformComp& operator>>(const nlohmann::json& j, AEX::TransformComp& mtr)
+{
+	if(j.find("local") != j.end())
+		j["local"] >> mtr.mLocal;
+	return mtr;
+}
+
+
+#pragma region TESTS
+void TestStream()
+{
+	json j;
+	j["test"] = "hello";
+	AEX::TransformComp tr;
+	j["transform"] << tr;
+	std::cout << std::setw(4) << j << '\n';
+
+	// modify jason. note: here I'm using json::find() so that if it's not there it crashes (hard fail).
+	(*(*(*j.find("transform")).find("local")).find("rot")) = 123456.0f;
+
+	// dump into string to compare results. 
+	std::string check = j.dump();
+	std::cout << std::setw(4) << j << '\n';
+
+	// seriaizer back transform with stream operator
+	j["transform"] >> tr;
+
+	// dump the modified transform to another json
+	json cmp; 
+	cmp << tr;
+	std::string cmpstr = cmp.dump();
+	bool diff = strcmp(check.c_str(),cmpstr.c_str()) != 0;
+	std::cout << std::setw(4) << cmp << '\n';
+	std::cout << (diff ? "DIFF GOOOD\n" : "DIFF BAAAD\n");
 	
 
+}
+#pragma endregion
+#pragma endregion
+
+#pragma region Lesson: Advanced streaming and Properties.
+/*!
+	/details
+	We know we're going to put the serialization interface in the IBase class
+	or at the very least, for the purist, we'll integrate serialziation at the IComp 
+	class level. 
+
+	While the system in the previous lesson is robust enough to handle serialization
+	we'll see that for custom components, a lot of manual labor will be involved
+		
+		j["health"] = ...
+		j["vision_range"] = ...
+		j["bla_bla_bla"] = ...
+
+	This is where properties come in, they help get rid of the tedious and error-prone
+	task of saving the *relevant* variables of the custom component, therefore saving 
+	time. An example is the Zero Engine [Property] tag. In Unity, setting a variable as public
+	will achieve the same effect, while making it private flags it and the serialization process
+	simply skips it. 
+
+		// Zilch Script
+		[Property] var health : Integer;	// saved
+		var counter : Integer;			// not saved
+
+	So how do we go about this? Well, if we want to automatize the writing of the variables to json,
+	we'll need to store them somewhere, so that the writing process goes over each of the properties
+	and write them to json. 
+	
+	Now we know we'll have container of some types for our properties. Properties are in essence a variable
+	with a flag, so that it's saved by the automatic serialization. Also, properties should be able to contain any type
+	so we'll need *templates* to encapsulate the variable that we want to save. Usage code would look like this:
+		
+	struct MyCustomComp : public IComp
+	{
+		Property<int> health;	// saved 
+		int counter;			// not saved
+	};
+
+			
+	because we are also going to *USE* the variable in the code for logic, ideally, the Property would behave exactly
+	like the variable. It is a proxy. Concretely, it will act like a *pointer or reference* to the type. Similar to iterators in STL.
+
+
+		struct MyCustomComp
+		{
+			//...
+			void Update()
+			{
+				if(health < 0) ...
+				health++;
+				health += 2;
+			}
+		};
+	
+	Let's define the property structure
+
+		template<typename T> struct Property
+		{
+			T val; // THE value the propety represent. Memory, basically.
+			
+			// conversion operators
+			int& operator(T)();
+			int& operator=(const T & rhs);
+		};
+
+	Then, we add the serialization as friend functions,	thus overloading the << operators for the property of type T(more here). 
+	These functions will write to the json value using the << operator. This means that for this to work `typename T` must also
+	overload them. For this to work, we also need to overload the << and >> operators of atomic data types (int, float, bool...) done above.
+
+		template <typename T> struct Property
+		{
+			// value
+
+			// conversion operators
+
+			// stream operators overloads
+			friend nlohmann::json& operator<<(nlohmann::json& j, const Property<T>& prop);
+			friend Property<T>& operator>>(nlohmann::json& j, const Property<T>& prop);
+		};
+	
+	see #test_property_1 for sample usage. 
+
+*/
+
+template <typename T> struct Property
+{
+	// value
+	T val;
+	
+	// constructors
+
+	// conversion operators
+	operator T() const { return val; }
+	T& operator=(const T & rhs) { val = rhs; return val; }
+
+	// overload stream operators
+	friend nlohmann::json& operator<<(nlohmann::json& j, const Property<T>& prop)
+	{
+		j << prop.val;
+		return j;
+	}
+	friend Property<T>& operator>>(nlohmann::json& j, const Property<T>& prop)
+	{
+		j >> prop.val;
+		return prop.val;
+	}
+};
+
+
+#pragma region TEST
+void test_property_1()
+{
+	Property<int> health;
+	health = 10;
+	cout << health << "\n\n";
+
+	// test json serialization
+	json j; 
+	j << health;
+	cout << std::setw(4) << j;
+};
+
+#pragma endregion
+#pragma endregion
+
+// ----------------------------------------------------------------------------
+// GAMESTATE FUNCTIONS
+void JsonDemo::Initialize()
+{
+	
+	//Test_SerializeJsonObject();		// test factory
+	//TestStream();						// test stream API
+	test_property_1();
+	cout << "\n\n\n\n";
 	exit(1);
 }
 void JsonDemo::LoadResources()
