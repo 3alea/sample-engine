@@ -187,6 +187,9 @@
     <ClInclude Include="src\Demos\JsonDemo\JsonDemo.h">
       <Filter>Demos\Json Demo</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\Utilities\AEXSerialization.h">
+      <Filter>Demos\Json Demo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Engine">

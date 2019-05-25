@@ -170,6 +170,7 @@
     <ClInclude Include="src\Engine\Platform\AEXWindow.h" />
     <ClInclude Include="src\Engine\Scene\AEXTransformComp.h" />
     <ClInclude Include="src\Engine\Utilities\AEXContainers.h" />
+    <ClInclude Include="src\Engine\Utilities\AEXSerialization.h" />
     <ClInclude Include="src\Engine\Utilities\AEXUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

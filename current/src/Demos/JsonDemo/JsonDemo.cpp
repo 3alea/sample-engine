@@ -4,10 +4,13 @@
 #include <iostream>
 #include <fstream>
 using namespace AEX;
+using std::cout;
+using std::endl;
 
 #include "json.hpp"
 using json = nlohmann::json;
 
+#pragma region Lesson: Json 101
 void GettingStartedWithJson()
 {
 	json value;
@@ -55,7 +58,9 @@ void GettingStartedWithJson()
 		outFile.close();
 	}
 }
+#pragma endregion
 
+#pragma region Lesson: ISerializable Interface
 struct ISerializable
 {
 	virtual void ToJson(json & val) = 0;
@@ -121,7 +126,9 @@ void TestReadWriteWithJson()
 		}
 	}
 }
+#pragma endregion
 
+#pragma region Lesson: Factory System
 struct ICreator {
 	virtual IBase * Create() = 0; // pure virtual 
 };
@@ -164,6 +171,7 @@ public:
 Factory::Factory() :ISystem() {}
 #define aexFactory (Factory::Instance())
 
+#pragma region Tests
 void SaveObjectToJson(GameObject * go, json & val)
 {
 	val["name"] = go->GetName();
@@ -184,7 +192,6 @@ void SaveObjectToJson(GameObject * go, json & val)
 		comps.push_back(compVal);
 	}
 }
-
 void LoadObjectFromJson(GameObject * obj, json & val)
 {
 	obj->Shutdown(); // clear everything before loading. 
@@ -200,16 +207,13 @@ void LoadObjectFromJson(GameObject * obj, json & val)
 		obj->AddComp((IComp*)newComp);
 	}
 }
-
-// ----------------------------------------------------------------------------
-// GAMESTATE FUNCTIONS
-void JsonDemo::Initialize()
+void Test_SerializeJsonObject()
 {
+
 	aexFactory->Register<GameObject>();
 	aexFactory->Register<MyTransform>();
 	aexFactory->Register<TransformComp>();
-	
-	GameObject go; 
+	GameObject go;
 
 	// load
 	{
@@ -235,8 +239,134 @@ void JsonDemo::Initialize()
 		}
 	}
 
-	
+}
+#pragma endregion
+#pragma endregion
 
+#pragma region Lesson(NEW): Overload Stream Operators)
+
+// overload the stream operator for json for known types
+
+// basic types - write
+json & operator<<(json &j, const int & val) { j = val; return j; }
+json & operator<<(json &j, const float & val) { j = val;return j; }
+json & operator<<(json &j, const double & val) { j = val;return j; }
+json & operator<<(json &j, const bool & val) { j = val; return j;}
+json & operator<<(json &j, const std::string & val) { j = val; return j;}
+
+
+// basic types - read
+int & operator>>(const json &j, int & val) { val = j; return val; }
+float & operator>>(const json &j, float & val) { val = j; return val; }
+double& operator>>(const json &j, double & val) { val = j; return val; }
+bool & operator>>(const json &j, bool & val) { val = j; return val; }
+std::string & operator>>(const json &j, std::string & val) { val = j.get<std::string>(); return val; }
+
+// complex types - write
+nlohmann::json& operator<<(nlohmann::json& j, const AEX::AEVec2 & v)
+{
+	j["x"] = v.x;
+	j["y"] = v.y;
+	return j;
+}
+nlohmann::json& operator<<(nlohmann::json& j, const AEX::AEVec3 & v)
+{
+	j["x"] = v.x;
+	j["y"] = v.y;
+	j["z"] = v.z;
+	return j;
+}
+nlohmann::json& operator<<(nlohmann::json& j, const AEX::Transform & tr)
+{
+	j["pos"] << tr.mTranslation;
+	j["posZ"] << tr.mTranslationZ;
+	j["sca"] << tr.mScale;
+	j["rot"] = tr.mOrientation;
+	return j;
+}
+nlohmann::json& operator<<(nlohmann::json& j, const AEX::TransformComp& mtr)
+{
+	j["local"] << mtr.mLocal;
+	return j;
+}
+
+// complex types - read
+AEX::AEVec2& operator>>(const nlohmann::json& j, AEX::AEVec2& v)
+{
+	if (j.find("x") != j.end())
+		v.x = j["x"];
+	if (j.find("y") != j.end())
+		v.y = j["y"];
+	return v;
+}
+AEX::AEVec3& operator>>(const nlohmann::json& j, AEX::AEVec3& v)
+{
+	if (j.find("x") != j.end())
+		v.x = j["x"];
+	if (j.find("y") != j.end())
+		v.y = j["y"];
+	if (j.find("z") != j.end())
+		v.z = j["z"];
+	return v;
+}
+AEX::Transform& operator>>(const nlohmann::json& j, AEX::Transform& mtr)
+{
+	if (j.find("pos") != j.end())
+		j["pos"] >> mtr.mTranslation;
+	if (j.find("posZ") != j.end())
+		j["posZ"] >> mtr.mTranslationZ;
+	if (j.find("sca") != j.end())
+		j["sca"] >> mtr.mScale;
+	if (j.find("rot") != j.end())
+		mtr.mOrientation = j["rot"];
+	return mtr;
+}
+AEX::TransformComp& operator>>(const nlohmann::json& j, AEX::TransformComp& mtr)
+{
+	if(j.find("local") != j.end())
+		j["local"] >> mtr.mLocal;
+	return mtr;
+}
+
+#pragma region TESTS
+void test_stream()
+{
+	json j;
+	j["test"] = "hello";
+	AEX::TransformComp tr;
+	j["transform"] << tr;
+	std::cout << std::setw(4) << j << '\n';
+
+	// modify jason. note: here I'm using json::find() so that if it's not there it crashes (hard fail).
+	(*(*(*j.find("transform")).find("local")).find("rot")) = 123456.0f;
+
+	// dump into string to compare results. 
+	std::string check = j.dump();
+	std::cout << std::setw(4) << j << '\n';
+
+	// seriaizer back transform with stream operator
+	j["transform"] >> tr;
+
+	// dump the modified transform to another json
+	json cmp; 
+	cmp << tr;
+	std::string cmpstr = cmp.dump();
+	bool diff = strcmp(check.c_str(),cmpstr.c_str()) != 0;
+	std::cout << std::setw(4) << cmp << '\n';
+	std::cout << (diff ? "DIFF GOOOD\n" : "DIFF BAAAD\n");
+	
+}
+#pragma endregion
+#pragma endregion
+
+// ----------------------------------------------------------------------------
+// GAMESTATE FUNCTIONS
+void JsonDemo::Initialize()
+{
+	
+	//Test_SerializeJsonObject();		// test factory
+	//test_stream();						// test stream API
+	cout << "\n\n\n\n";
 	exit(1);
 }
 void JsonDemo::LoadResources()
