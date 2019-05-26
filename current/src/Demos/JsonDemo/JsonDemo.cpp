@@ -245,6 +245,7 @@ void Test_SerializeJsonObject()
 
 #pragma region Lesson(NEW): Overload Stream Operators)
 
+#pragma region Part 1: Stream Operators For Json
 // overload the stream operator for json for known types
 
 // basic types - write
@@ -359,6 +360,199 @@ void test_stream()
 #pragma endregion
 #pragma endregion
 
+#pragma region Part 2: New ISerializable 
+struct ISerializable2
+{
+	virtual json& operator<< (json&j) const = 0;
+	virtual void operator>>(json&j) = 0;
+	virtual std::ostream& operator << (std::ostream & o) const
+	{
+		json j;
+		this->operator<<(j);
+		return o << j;
+	}
+};
+
+struct IComp2 : public AEX::IComp, public ISerializable2
+{
+	virtual json& operator<< (json&j)  const
+	{
+		return j;
+	}
+	virtual void operator>>(json&j) {
+	}
+	virtual std::ostream& operator << (std::ostream & o) const
+	{
+		json j;
+		this->operator<<(j);
+		return o << j;
+	}
+	friend nlohmann::json& operator<<(nlohmann::json& j, const IComp2& comp)
+	{
+		comp.operator<<(j);
+		return j;
+	}
+	friend IComp2& operator>>(nlohmann::json& j, IComp2& comp)
+	{
+		comp.operator>>(j);
+		return comp;
+	}
+	friend std::ostream& operator << (std::ostream & o, const IComp2& comp)
+	{
+		json j;
+		comp.operator<<(j);
+		return o << j;
+	}
+};
+class GameObject2 : public AEX::GameObject, public ISerializable2
+{
+public:
+	virtual json& operator<< (json&j)  const
+	{
+		// serialize name (todo: implement this as a Property). 
+		j["name"] = mName;
+
+		// serialize components
+		json & comps = j["comps"];
+		for (u32 i = 0; i < this->GetComps().size(); ++i)
+		{
+			json compJson;
+			IComp * comp = GetComp(i);
+			compJson["__type"] = comp->GetType().GetName();
+
+			// write the component  using stream operators
+
+			// note only IComp3 implement it
+			if (auto comp2 = dynamic_cast<IComp2*>(comp))
+			{
+				comp2->operator<<(compJson);
+			}
+
+			// add to json array
+			comps.push_back(compJson);
+		}
+
+		return j;
+	}
+	virtual void operator>>(json&j) {
+
+		// get components
+		Shutdown(); // clear everything before loading. 
+
+		// read name (this should really be another property).
+		SetName(j["name"].get<std::string>().c_str());
+
+		// read comps and allocate them
+		json & comps = *j.find("comps");
+		for (auto it = comps.begin(); it != comps.end(); ++it)
+		{
+			// get json object for that component
+			json & compJson = *it;
+
+			// read type and create with factory
+			std::string typeName = compJson["__type"].get<std::string>();
+			IBase * newComp = aexFactory->Create(typeName.c_str());
+
+			// error check - Factory couldn't allocate memory
+			if (newComp == nullptr)
+				continue;
+
+			// only stream components deriving from IComp2
+			if (auto comp2 = dynamic_cast<IComp2*>(newComp))
+				comp2->operator>>(compJson);
+
+			// add new comp object
+			AddComp((IComp*)newComp);
+		}
+	}
+	friend nlohmann::json& operator<<(nlohmann::json& j, const GameObject2& obj)
+	{
+		obj.operator<<(j);
+		return j;
+	}
+	friend GameObject2& operator>>(nlohmann::json& j, GameObject2& obj)
+	{
+		obj.operator>>(j);
+		return obj;
+	}
+	virtual std::ostream& operator << (std::ostream & o) const
+	{
+		json j;
+		this->operator<<(j);
+		return o << j;
+	}
+	friend std::ostream& operator<< (std::ostream & o, const GameObject2& obj)
+	{
+		json j;
+		obj.operator<<(j);
+		return o << j;
+	}
+};
+
+#pragma region TESTS
+struct StreamComp : public IComp2
+{
+	AEX_RTTI_DECL(StreamComp, IComp2);
+
+	// test vars
+	int life;
+	float duration;
+	bool alive;
+	Transform local;
+
+	// Overload stream operators for json
+	virtual json& operator <<(json& j)const
+	{
+		// write local
+		j["local"] << local;
+		j["life"] << life;
+		j["duration"] << duration;
+		j["alive"] << alive;
+		return j;
+	}
+	virtual void operator >>(json& j)
+	{
+		if (j.find("local") != j.end()) j["local"] >> local;
+		if (j.find("life") != j.end()) j["life"] >> life;
+		if (j.find("duration") != j.end()) j["duration"] >> duration;
+		if (j.find("alive") != j.end()) j["alive"] >> alive;
+	}
+};
+void test_stream_object()
+{
+	// register new comp with factory
+	aexFactory->Register<StreamComp>();
+
+	cout << "\n--------------TEST WRITE-----------------\n";
+
+	// test object
+	GameObject2 go;
+
+	// create new comp on it
+	go.NewComp<StreamComp>();
+	cout << std::setw(4) << go;
+
+	// do modifications
+	go.GetComp<StreamComp>()->alive = false;
+	go.GetComp<StreamComp>()->local.mTranslation = AEVec2(10,10);
+	go.GetComp<StreamComp>()->duration = 12345.6789f;
+	go.GetComp<StreamComp>()->life = 999999;
+	cout << std::setw(4) << go;
+	
+	cout << "\n--------------TEST READ-----------------\n";
+
+	json j;
+	j << go;
+
+	// stream in new object and print
+	GameObject2 go2;
+	j >> go2;
+	cout << std::setw(4) << go2;
+}
+#pragma endregion	// TESTS
+#pragma endregion	// Part 2: New ISerializable 
+#pragma endregion	// Lesson: Stream operators
+
 #pragma region Lesson(Advanced): Relfection and Properties.
 /*!
 	/details
@@ -391,11 +585,11 @@ void test_stream()
 	with a flag, so that it's saved by the automatic serialization. Also, properties should be able to contain any type
 	so we'll need *templates* to encapsulate the variable that we want to save. Usage code would look like this:
 		
-	struct MyCustomComp : public IComp
-	{
-		Property<int> health;	// saved 
-		int counter;			// not saved
-	};
+		struct MyCustomComp : public IComp
+		{
+			Property<int> health;	// saved 
+			int counter;			// not saved
+		};
 
 			
 	because we are also going to *USE* the variable in the code for logic, ideally, the Property would behave exactly
@@ -453,16 +647,7 @@ void test_stream()
 	like a map<string, Property*>, where the value is a pointer to a base interface that overloads the	
 */
 #include <unordered_map>
-struct ISerializable2
-{
-	virtual json& operator<< (json&j) const = 0;
-	virtual void operator>>(json&j) = 0;
-	virtual std::ostream& operator << (std::ostream & o) const
-	{
-		return o;
-	}
 
-};
 class PROP_MAP : public ISerializable2
 {
 public:
@@ -602,7 +787,7 @@ template <typename T> struct Property : public ISerializable2
 #define PROP_VAL_EX(_type_, _name_, val, _properties_) Property<_type_> _name_ {#_name_, val, _properties_}
 
 // these assume that a container variable called 'properties' exists in the local scope of the code
-// that uses these maccros. This is intended to work with the IComp2 class example below. 
+// that uses these maccros. This is intended to work with the IComp3 class example below. 
 #define PROP(_type_, _name_) PROP_EX(_type_, _name_, properties)
 #define PROP_VAL(_type_, _name_, val)  PROP_VAL_EX(_type_, _name_, val, properties)
 
@@ -681,8 +866,26 @@ void test_property_2()
 	}
 }
 
-// -- test 3
-struct IComp2 : public AEX::IComp, public ISerializable2
+
+/*!	-- test 3 -- 
+	
+	this test demonstrate the convenience of properties.
+
+	Notice how by just deriving from IComp3, the structures
+	automaticall inherit all the serialization functions
+	so stream operator works in any circumstance.
+
+	Inheritance is easy and properties are written as if
+	part of the derived class (see struct compB)
+
+	Aggregation also works because IComp3 ALSO DERIVES from ISerializable2.
+	Therefore, it can also be stored in a PROP_MAP container which allows us
+	to make components complex properties (struct/class containings properties).
+	The output is as expected
+
+*/
+
+struct IComp3 : public AEX::IComp, public ISerializable2
 {
 	PROP_MAP properties;
 
@@ -696,66 +899,53 @@ struct IComp2 : public AEX::IComp, public ISerializable2
 	}
 	virtual std::ostream& operator << (std::ostream & o) const
 	{
-		properties.operator<<(o);
-		return o;
+		json j;
+		this->operator<<(j);
+		return o << j;
 	}
-	friend nlohmann::json& operator<<(nlohmann::json& j, const IComp2& comp)
+	friend nlohmann::json& operator<<(nlohmann::json& j, const IComp3& comp)
 	{
 		comp.operator<<(j);
 		return j;
 	}
-	friend IComp2& operator>>(nlohmann::json& j, IComp2& comp)
+	friend IComp3& operator>>(nlohmann::json& j, IComp3& comp)
 	{
 		comp.operator>>(j);
 		return comp;
 	}
 
 };
+
+// basic usage
+struct compA : public IComp3
+{
+	AEX_RTTI_DECL(compA, IComp3);
+	PROP_VAL(int, life, 10);
+	PROP_VAL(bool, isDead, true);
+	PROP_VAL(std::string, name, "Billy Jean");
+};
+
+// inhertiance
+struct compB : public compA
+{
+	AEX_RTTI_DECL(compB, compA);
+	PROP_VAL(float, ff, 2.45f);
+};
+
+// aggregation
+struct compC : public IComp3
+{
+	AEX_RTTI_DECL(compC, IComp3);
+	PROP(compA, a);
+};
+
 void test_property_3()
 {
-	/*
-		this test demonstrate the convenience of properties.
-		
-		Notice how by just deriving from IComp2, the structures
-		automaticall inherit all the serialization functions
-		so stream operator works in any circumstance. 
-
-		Inheritance is easy and properties are written as if
-		part of the derived class (see struct compB)
-		
-		Aggregation also works because IComp2 ALSO DERIVES from ISerializable2.
-		Therefore, it can also be stored in a PROP_MAP container which allows us
-		to make components complex properties (struct/class containings properties). 
-		The output is as expected
-
-	*/
-
-	// basic usage
-	struct compA : public IComp2
-	{
-		PROP_VAL(int, life, 10);
-		PROP_VAL(bool, isDead, true);
-		PROP_VAL(std::string, name, "Billy Jean");
-	};
-
-
-	// inhertiance
-	struct compB : public compA
-	{
-		PROP_VAL(float, ff, 2.45f);
-	};
-
-	// aggregation
-	struct compC : public IComp2
-	{
-		 PROP(compA, a); 
-	};
-
 	compA A;
 	compB B;
 	compC C;
 
-	// test standar manips
+	// test standard manips
 	A.life = 999999;
 	A.isDead = false;
 	A.name = "bla bla";
@@ -794,7 +984,119 @@ void test_property_3()
 	CC.operator<<(std::cout << std::setw(4));
 
 }
+// -- test 4
+class GameObject3 : public AEX::GameObject, public ISerializable2
+{
+public:
+	PROP_MAP properties; 
+	virtual json& operator<< (json&j)  const
+	{
+		// serialize properties
+		properties.operator<< (j);
 
+		// serialize name (todo: implement this as a Property). 
+		j["name"] = mName;
+
+		// serialize components
+		json & comps = j["comps"];
+		for (u32 i = 0; i < this->GetComps().size(); ++i)
+		{
+			json compJson;
+			IComp * comp = GetComp(i);
+			compJson["__type"] = comp->GetType().GetName();
+			
+			// write the component  using stream operators
+
+			// note only IComp3 implement it
+			if (auto comp2 = dynamic_cast<IComp3*>(comp))
+			{
+				comp2->operator<<(compJson);
+			}
+
+			// add to json array
+			comps.push_back(compJson);
+		}
+
+		return j;
+	}
+	virtual void operator>>(json&j) {
+
+		// read properties
+		properties.operator>>(j);
+
+		// get components
+		Shutdown(); // clear everything before loading. 
+
+		// read name (this should really be another property).
+		SetName(j["name"].get<std::string>().c_str());
+
+		// read comps and allocate them
+		json & comps = *j.find("comps");
+		for (auto it = comps.begin(); it != comps.end(); ++it)
+		{
+			// get json object for that component
+			json & compJson = *it;
+
+			// read type and create with factory
+			std::string typeName = compJson["__type"].get<std::string>();
+			IBase * newComp = aexFactory->Create(typeName.c_str());
+
+			// error check - Factory couldn't allocate memory
+			if (newComp == nullptr)
+				continue;
+
+			// only stream components deriving from IComp3
+			if (auto comp2 = dynamic_cast<IComp3*>(newComp))
+				comp2->operator>>(compJson);
+
+			// add new comp object
+			AddComp((IComp*)newComp);
+		}
+	}
+	virtual std::ostream& operator << (std::ostream & o) const
+	{
+		json j;
+		this->operator<<(j);
+		return o << j;
+	}
+	friend nlohmann::json& operator<<(nlohmann::json& j, const GameObject3& obj)
+	{
+		obj.operator<<(j);
+		return j;
+	}
+	friend GameObject3& operator>>(nlohmann::json& j, GameObject3& obj)
+	{
+		obj.operator>>(j);
+		return obj;
+	}
+};
+void test_property_object()
+{
+	cout << "--------------TEST WRITE-----------------\n";
+	// test write
+	GameObject3 go;
+	go.NewComp<compA>();
+	go.NewComp<compB>();
+	go.NewComp<compC>();
+	go.operator<<(cout << std::setw(4));
+
+	cout << "--------------TEST READ -----------------\n";
+	
+	// register comps
+	aexFactory->Register<compA>();
+	aexFactory->Register<compB>();
+	aexFactory->Register<compC>();
+	
+	// write first object to json
+	json j;
+	go.operator<<(j);
+
+	// stream json into new object and print
+	GameObject3 go2;
+	go2.operator>>(j);
+	go2.operator<<(cout << std::setw(4));
+
+}
 #pragma endregion
 #pragma endregion
 
@@ -802,10 +1104,12 @@ void test_property_3()
 void JsonDemo::Initialize()
 {
 	//Test_SerializeJsonObject();		// test factory
-	//TestStream();						// test stream API
+	//test_stream();					// test stream API
+	test_stream_object();				// test tream API with Facory system
 	//test_property_1();				// basic property usage
 	//test_property_2();				// simple automatic serialization 
-	test_property_3();					// property composition
+	//test_property_3();				// property composition
+	//test_property_object();		// GameObjectserialization
 	cout << "\n\n\n\n";
 	exit(1);
 }
