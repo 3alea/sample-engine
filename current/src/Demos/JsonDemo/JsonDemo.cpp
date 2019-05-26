@@ -358,7 +358,7 @@ void TestStream()
 #pragma endregion
 #pragma endregion
 
-#pragma region Lesson: Advanced streaming and Properties.
+#pragma region Lesson(Advanced): Relfection and Properties.
 /*!
 	/details
 	We know we're going to put the serialization interface in the IBase class
@@ -517,6 +517,17 @@ public:
 	}
 };
 
+/*!
+	/details
+
+	Property class acts as a proxy for variable typename T. It's a proxy
+	this is a common programming pattern.
+
+	Additionally, Property implements the ISerializable2 interface to, again
+	act as a proxy for `val`. This means that whatever the type of `val` is, it 
+	must also implement the serializable interface. Note that for basic data types, 
+	specifically int, `float`, `double`, `bool` and `string`.
+*/
 template <typename T> struct Property : public ISerializable2
 {
 
@@ -553,6 +564,14 @@ template <typename T> struct Property : public ISerializable2
 		j >> prop.val;
 		return prop;
 	}
+	friend std::ostream& operator << (std::ostream & o, const Property<T>&prop)
+	{
+		json j;
+		j << prop.val;
+
+		o << j;
+		return o;
+	}
 
 	virtual json& operator<< (json&j) const
 	{
@@ -563,19 +582,26 @@ template <typename T> struct Property : public ISerializable2
 		j >> val;
 
 	}
-	//virtual std::ostream& operator << (std::ostream & o)  const
-	//{
-	//	json j;
-	//	j << val;
-	//	
-	//	o << j;
-	//	return o ;
-	//}
+	virtual std::ostream& operator << (std::ostream & o)  const
+	{
+		json j;
+		j << val;
+		
+		o << j;
+		return o ;
+	}
 };
 
+// these maccros will help when declaring properties. 
+// they leverage moderne C++ initializer lists to initialize the values (PROP_VAL and PROP_VAL_EX)
+// see test functions for sample usage
+
+// properties container passed explicitly. 
 #define PROP_EX(_type_, _name_, _properties_) Property<_type_> _name_ {#_name_, _properties_}
 #define PROP_VAL_EX(_type_, _name_, val, _properties_) Property<_type_> _name_ {#_name_, val, _properties_}
 
+// these assume that a container variable called 'properties' exists in the local scope of the code
+// that uses these maccros. This is intended to work with the IComp2 class example below. 
 #define PROP(_type_, _name_) PROP_EX(_type_, _name_, properties)
 #define PROP_VAL(_type_, _name_, val)  PROP_VAL_EX(_type_, _name_, val, properties)
 
@@ -653,6 +679,8 @@ void test_property_2()
 		properties.operator<<(cout << std::setw(4));
 	}
 }
+
+// -- test 3
 struct IComp2 : public AEX::IComp, public ISerializable2
 {
 	PROP_MAP properties;
@@ -685,12 +713,29 @@ struct IComp2 : public AEX::IComp, public ISerializable2
 };
 void test_property_3()
 {
+	/*
+		this test demonstrate the convenience of properties.
+		
+		Notice how by just deriving from IComp2, the structures
+		automaticall inherit all the serialization functions
+		so stream operator works in any circumstance. 
 
+		Inheritance is easy and properties are written as if
+		part of the derived class (see struct compB)
+		
+		Aggregation also works because IComp2 ALSO DERIVES from ISerializable2.
+		Therefore, it can also be stored in a PROP_MAP container which allows us
+		to make components complex properties (struct/class containings properties). 
+		The output is as expected
+
+	*/
+
+	// basic usage
 	struct compA : public IComp2
 	{
 		PROP_VAL(int, life, 10);
 		PROP_VAL(bool, isDead, true);
-		PROP_VAL(std::string, mName, "Billy Jean");
+		PROP_VAL(std::string, name, "Billy Jean");
 	};
 
 
@@ -710,26 +755,57 @@ void test_property_3()
 	compB B;
 	compC C;
 
+	// test standar manips
+	A.life = 999999;
+	A.isDead = false;
+	A.name = "bla bla";
+
+	// direct manip example
+	Property<float> * ff_prop = dynamic_cast<Property<float>*>(B.properties._props_["ff"]);
+	ff_prop->val = 66666.6666f;
+
+	// copy complex prop
+	C.a = A; 
+
+	cout << "--------------TEST WRITE-----------------\n";
+
+	// explicity call the stream write operator
 	json j;
 	A.operator<<(j["a"]);
 	B.operator<<(j["b"]);
 	C.operator<<(j["c"]);
 	std::cout << std::setw(4) << j;
+
+	cout << "--------------TEST READ -----------------\n";
+	
+	// make copies and stream in. 
+	compA AA;
+	compB BB;
+	compC CC;
+
+	// explict call to stream in operator
+	AA.operator>>(j["a"]);
+	BB.operator>>(j["b"]);
+	CC.operator>>(j["c"]);
+
+	// explicit call to stream out operator for std::ostream
+	AA.operator<<(std::cout << std::setw(4));
+	BB.operator<<(std::cout << std::setw(4));
+	CC.operator<<(std::cout << std::setw(4));
+
 }
 
 #pragma endregion
 #pragma endregion
 
-// ----------------------------------------------------------------------------
-// GAMESTATE FUNCTIONS
+#pragma region Gamestate functions - they just call the particular tests functions
 void JsonDemo::Initialize()
 {
-	
 	//Test_SerializeJsonObject();		// test factory
 	//TestStream();						// test stream API
-	//test_property_1();
-	//test_property_2();
-	test_property_3();
+	//test_property_1();				// basic property usage
+	//test_property_2();				// simple automatic serialization 
+	test_property_3();					// property composition
 	cout << "\n\n\n\n";
 	exit(1);
 }
@@ -738,44 +814,11 @@ void JsonDemo::LoadResources()
 }
 void JsonDemo::Update()
 {
-	// get main window dimensions
-	auto mainWin = aexWindowMgr->GetMainWindow();
-	auto winWH = AEVec2(f32(mainWin->GetWidth()), f32(mainWin->GetHeight()));
 
-	// control the engine
-	if (aexInput->KeyTriggered('B'))
-		aexTime->LockFrameRate(!aexTime->FrameRateLocked());
-	if (aexInput->KeyTriggered('V'))
-		aexGraphics->SetVSyncEnabled(!aexGraphics->GetVSyncEnabled());
-	if (aexInput->KeyPressed(VK_OEM_PLUS))
-		aexTime->SetMaxFrameRate(aexTime->GetMaxFrameRate() + 1.0);
-	if (aexInput->KeyPressed(VK_OEM_MINUS))
-		aexTime->SetMaxFrameRate(aexTime->GetMaxFrameRate() - 1.0);
-	if (aexInput->KeyTriggered('F'))
-		mainWin->SetFullScreen(!mainWin->GetFullScreen());
-
-	f32 fps = (f32)aexTime->GetFrameRate();
-	std::string wintitle = "Simple Demo - FPS: "; wintitle += std::to_string(fps);
-	if (aexTime->FrameRateLocked())	wintitle += "(LOCKED)";
-	wintitle += " - VSYNC: ";	wintitle +=	aexGraphics->GetVSyncEnabled() ? "ON" : "OFF";
-	wintitle += " - Controls: FPS: 'B', '+/-'. VSYNC: 'V'";
-	aexWindowMgr->GetMainWindow()->SetTitle(wintitle.c_str());
-
-
-	Logic::Instance()->Update();
 
 }
 void JsonDemo::Render()
 {
-	auto mainWin = aexWindowMgr->GetMainWindow();
-	auto winWH = AEVec2(f32(mainWin->GetWidth()), f32(mainWin->GetHeight()));
 
-	aexGraphics->SetViewport(0, 0, s32(winWH.x), s32(winWH.y));
-	aexGraphics->SetClearColor(Color(0.7f,0.7f,0.7f,1.0f));
-	aexGraphics->ClearFrameBuffer();
-
-	auto mp = aexInput->GetMousePos();
-	aexGraphics->DrawCircle(mp.x, mp.y, 50, Color(0,0,0,1));
-
-	aexGraphics->Present();
 }
+#pragma endregion
