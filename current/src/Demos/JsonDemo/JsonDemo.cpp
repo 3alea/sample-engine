@@ -252,6 +252,12 @@ json & operator<<(json &j, const double & val) { j = val;return j; }
 json & operator<<(json &j, const bool & val) { j = val; return j;}
 json & operator<<(json &j, const std::string & val) { j = val; return j;}
 
+int & operator>>(const json &j, int & val) { val = j; return val; }
+float & operator>>(const json &j, float & val) { val = j; return val; }
+double& operator>>(const json &j, double & val) { val = j; return val; }
+bool & operator>>(const json &j, bool & val) { val = j; return val; }
+std::string & operator>>(const json &j, std::string & val) { val = j.get<std::string>(); return val; }
+
 nlohmann::json& operator<<(nlohmann::json& j, const AEX::AEVec2 & v)
 {
 	j["x"] = v.x;
@@ -434,14 +440,103 @@ void TestStream()
 	
 	see #test_property_1 for sample usage. 
 
-*/
+	From the restults of #test_property_1, we see that it doesn't save the name of the property, 
+	but just the value. Funnily enough, the json acts as a proxy, just like the property. 
+	We'll want to add the name of the property, as declared in the custom struct. 
 
-template <typename T> struct Property
+		property<int> health; // json -> {"health" = ...}
+
+	So we need to store the name of the variable somewhere. We could add a variable of type 
+	string to the property and save that in the stream functions. However, we can leverage 
+	the container of our properties to actually store that info. By choosing a key-value container
+	like a map<string, Property*>, where the value is a pointer to a base interface that overloads the	
+*/
+#include <unordered_map>
+struct ISerializable2
 {
+	virtual json& operator<< (json&j) = 0;
+	virtual void operator>>(json&j) = 0;
+	virtual std::ostream& operator << (std::ostream & o)
+	{
+		return o;
+	}
+
+};
+class PROP_MAP : public ISerializable2
+{
+public:
+	std::unordered_map<std::string, ISerializable2*> _props_;
+	// overload stream operators
+	friend nlohmann::json& operator<<(nlohmann::json& j, PROP_MAP& properties)
+	{
+		for (auto prop : properties._props_)
+		{
+			// note i need to call the explicit operator here because the
+			// property woould resolve in the value itself and call one of the global 
+			// functions instead.
+			prop.second->operator<<(j[prop.first]);
+		}
+		return j;
+	}
+	friend PROP_MAP& operator>>(nlohmann::json& j, PROP_MAP& properties)
+	{
+		for (auto prop : properties._props_)
+		{
+			prop.second->operator>>(j[prop.first]);
+		}
+		return properties;
+	}
+	friend std::ostream& operator << (std::ostream & o, PROP_MAP& properties)
+	{
+		json j;
+		o << properties.operator<<(j);
+
+		return o;
+	}
+	virtual json& operator<< (json&j)
+	{
+		for( auto prop : this->_props_)
+		{
+			prop.second->operator<<(j[prop.first]);
+		}
+		return j;
+	}
+	virtual void operator>>(json&j)
+	{
+		for (auto prop : this->_props_)
+		{
+			prop.second->operator>>(j[prop.first]);
+		}
+	}
+	virtual std::ostream& operator << (std::ostream & o)
+	{
+		json j;
+		o << this->operator<<(j);
+
+		return o;
+	}
+};
+
+template <typename T> struct Property : public ISerializable2
+{
+
 	// value
 	T val;
 	
 	// constructors
+	Property() {}
+	Property(const char * name, PROP_MAP& prop_map)
+	{
+		// dont' allow duplicates
+		assert(prop_map._props_.find(name) == prop_map._props_.end());
+		prop_map._props_[name] = this;
+	}
+	Property(const char * name, const T &value, PROP_MAP& prop_map)
+		:Property(name, prop_map)
+	{
+
+		val = value;
+	}
 
 	// conversion operators
 	operator T() const { return val; }
@@ -453,26 +548,174 @@ template <typename T> struct Property
 		j << prop.val;
 		return j;
 	}
-	friend Property<T>& operator>>(nlohmann::json& j, const Property<T>& prop)
+	friend Property<T>& operator>>(nlohmann::json& j, Property<T>& prop)
 	{
 		j >> prop.val;
-		return prop.val;
+		return prop;
 	}
+
+	virtual json& operator<< (json&j)
+	{
+		j << val;
+		return j;
+	}
+	virtual void operator>>(json&j){
+		j >> val;
+
+	}
+	//virtual std::ostream& operator << (std::ostream & o)
+	//{
+	//	json j;
+	//	j << val;
+	//	
+	//	o << j;
+	//	return o ;
+	//}
 };
+
+#define PROP_EX(_type_, _name_, _properties_) Property<_type_> _name_ {#_name_, _properties_}
+#define PROP_VAL_EX(_type_, _name_, val, _properties_) Property<_type_> _name_ {#_name_, val, _properties_}
+
+#define PROP(_type_, _name_) PROP_EX(_type_, _name_, properties)
+#define PROP_VAL(_type_, _name_, val)  PROP_VAL_EX(_type_, _name_, val, properties)
 
 
 #pragma region TEST
 void test_property_1()
 {
-	Property<int> health;
-	health = 10;
-	cout << health << "\n\n";
+	{
+		Property<int> health;
+		health = 10;
+		cout << health << "\n\n";
 
-	// test json serialization
-	json j; 
-	j << health;
-	cout << std::setw(4) << j;
+		// test json serialization
+		json j;
+		j << health;
+		cout << std::setw(4) << j;
+
+		// modify json and set health
+		j = 12345;
+		j >> health;
+		cout << health << "\n\n";
+	}
+	// test with custom transform
+	{
+		Property<TransformComp> comp;
+		json j;
+		j << comp;
+		cout << std::setw(4) << j;
+
+
+		// modify json and set health
+		j["local"]["pos"]["x"] = 3.1456;
+		j >> comp;
+		json jcmp;
+		jcmp << comp;
+		cout << std::setw(4) << jcmp;
+	}
 };
+
+void test_property_2()
+{
+	// now we want to test the automatic serialization using
+	// just a map, that we will fill automatically using the 
+	// custom constructors.
+
+
+	{
+		PROP_MAP properties;
+
+		PROP_EX(int, i, properties);
+		PROP(float, f);	// IMPORTANT this maccros assumes properties exists. it's meant to add to  be used in classes.
+		PROP(double, d);
+		PROP(bool, b);
+		PROP(std::string, str);
+
+		// test
+		str = "hello";
+		i = 10;
+		f = 3.14f;
+		d = 68.98765432131;
+		b = false;
+
+		PROP_VAL(int, ii, 1234);
+		PROP_VAL(float, ff, 180.0f);
+		PROP_VAL(double, dd, 1234.1234567890);
+		PROP_VAL(bool, bb, true);
+		PROP_VAL(std::string, sstr, "hello");
+
+		json j;
+		properties.operator<< (j);
+		cout << std::setw(4) << j;
+
+		j["str"] = "READING WORKS";
+		j["f"] = 666.666f;
+		properties.operator>>(j);
+		properties.operator<<(cout << std::setw(4));
+	}
+}
+void test_property_3()
+{
+	struct IComp2 : public AEX::IComp, public ISerializable2
+	{
+		PROP_MAP properties;
+
+		virtual json& operator<< (json&j)
+		{
+			j << properties;
+			properties.operator<< (j);
+			return j;
+		}
+		virtual void operator>>(json&j) {
+			properties.operator>>(j);
+
+		}
+		virtual std::ostream& operator << (std::ostream & o)
+		{
+			properties.operator<<(o << std::setw(4));
+			return o;
+		}
+
+	};
+
+	struct compA : public IComp2
+	{
+		PROP_VAL(int, life, 10);
+		PROP_VAL(bool, isDead, true);
+	};
+
+	struct compB : public IComp2
+	{
+		//enum Enum { enum_1, enum_2, enum_3 };
+		//PROP_VAL(Enum, myEnum, enum_2);
+		PROP_VAL(std::string, mName, "Billy Jean");
+	};
+
+	// inhertiance
+	struct compC : public compA
+	{
+		PROP_VAL(float, ff, 2.45f);
+		//PROP(compA, a);
+		//PROP(compB, b);
+	};
+
+	// aggregation
+	struct compD : public IComp2
+	{
+		PROP(compC, a);
+		//PROP(compB, b);
+	};
+
+	compA A;
+	compB B;
+	compC C;
+
+	json j;
+	A.operator<<(j["a"]);
+	B.operator<<(j["b"]);
+	C.operator<<(j["c"]);
+	std::cout << std::setw(4) << j;
+}
 
 #pragma endregion
 #pragma endregion
@@ -484,7 +727,9 @@ void JsonDemo::Initialize()
 	
 	//Test_SerializeJsonObject();		// test factory
 	//TestStream();						// test stream API
-	test_property_1();
+	//test_property_1();
+	//test_property_2();
+	test_property_3();
 	cout << "\n\n\n\n";
 	exit(1);
 }
