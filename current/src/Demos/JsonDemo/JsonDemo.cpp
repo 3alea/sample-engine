@@ -209,10 +209,10 @@ void LoadObjectFromJson(GameObject * obj, json & val)
 }
 void Test_SerializeJsonObject()
 {
-
 	aexFactory->Register<GameObject>();
 	aexFactory->Register<MyTransform>();
 	aexFactory->Register<TransformComp>();
+	
 	GameObject go;
 
 	// load
@@ -245,32 +245,29 @@ void Test_SerializeJsonObject()
 
 #pragma region Lesson(NEW): Overload Stream Operators)
 
-// overload the stream operator for json for basic types (will be useful later)
+// overload the stream operator for json for known types
+
+// basic types - write
 json & operator<<(json &j, const int & val) { j = val; return j; }
 json & operator<<(json &j, const float & val) { j = val;return j; }
 json & operator<<(json &j, const double & val) { j = val;return j; }
 json & operator<<(json &j, const bool & val) { j = val; return j;}
 json & operator<<(json &j, const std::string & val) { j = val; return j;}
 
+
+// basic types - read
 int & operator>>(const json &j, int & val) { val = j; return val; }
 float & operator>>(const json &j, float & val) { val = j; return val; }
 double& operator>>(const json &j, double & val) { val = j; return val; }
 bool & operator>>(const json &j, bool & val) { val = j; return val; }
 std::string & operator>>(const json &j, std::string & val) { val = j.get<std::string>(); return val; }
 
+// complex types - write
 nlohmann::json& operator<<(nlohmann::json& j, const AEX::AEVec2 & v)
 {
 	j["x"] = v.x;
 	j["y"] = v.y;
 	return j;
-}
-AEX::AEVec2& operator>>(const nlohmann::json& j, AEX::AEVec2& v)
-{
-	if (j.find("x") != j.end())
-		v.x = j["x"];
-	if (j.find("y") != j.end())
-		v.y = j["y"];
-	return v;
 }
 nlohmann::json& operator<<(nlohmann::json& j, const AEX::AEVec3 & v)
 {
@@ -278,6 +275,29 @@ nlohmann::json& operator<<(nlohmann::json& j, const AEX::AEVec3 & v)
 	j["y"] = v.y;
 	j["z"] = v.z;
 	return j;
+}
+nlohmann::json& operator<<(nlohmann::json& j, const AEX::Transform & tr)
+{
+	j["pos"] << tr.mTranslation;
+	j["posZ"] << tr.mTranslationZ;
+	j["sca"] << tr.mScale;
+	j["rot"] = tr.mOrientation;
+	return j;
+}
+nlohmann::json& operator<<(nlohmann::json& j, const AEX::TransformComp& mtr)
+{
+	j["local"] << mtr.mLocal;
+	return j;
+}
+
+// complex types - read
+AEX::AEVec2& operator>>(const nlohmann::json& j, AEX::AEVec2& v)
+{
+	if (j.find("x") != j.end())
+		v.x = j["x"];
+	if (j.find("y") != j.end())
+		v.y = j["y"];
+	return v;
 }
 AEX::AEVec3& operator>>(const nlohmann::json& j, AEX::AEVec3& v)
 {
@@ -288,17 +308,6 @@ AEX::AEVec3& operator>>(const nlohmann::json& j, AEX::AEVec3& v)
 	if (j.find("z") != j.end())
 		v.z = j["z"];
 	return v;
-}
-
-
-// overload the stream operator
-nlohmann::json& operator<<(nlohmann::json& j, const AEX::Transform & tr)
-{
-	j["pos"] << tr.mTranslation;
-	j["posZ"] << tr.mTranslationZ;
-	j["sca"] << tr.mScale;
-	j["rot"] = tr.mOrientation;
-	return j;
 }
 AEX::Transform& operator>>(const nlohmann::json& j, AEX::Transform& mtr)
 {
@@ -312,12 +321,6 @@ AEX::Transform& operator>>(const nlohmann::json& j, AEX::Transform& mtr)
 		mtr.mOrientation = j["rot"];
 	return mtr;
 }
-
-nlohmann::json& operator<<(nlohmann::json& j, const AEX::TransformComp& mtr)
-{
-	j["local"] << mtr.mLocal;
-	return j;
-}
 AEX::TransformComp& operator>>(const nlohmann::json& j, AEX::TransformComp& mtr)
 {
 	if(j.find("local") != j.end())
@@ -325,9 +328,8 @@ AEX::TransformComp& operator>>(const nlohmann::json& j, AEX::TransformComp& mtr)
 	return mtr;
 }
 
-
 #pragma region TESTS
-void TestStream()
+void test_stream()
 {
 	json j;
 	j["test"] = "hello";
@@ -353,7 +355,6 @@ void TestStream()
 	std::cout << std::setw(4) << cmp << '\n';
 	std::cout << (diff ? "DIFF GOOOD\n" : "DIFF BAAAD\n");
 	
-
 }
 #pragma endregion
 #pragma endregion
@@ -698,7 +699,6 @@ struct IComp2 : public AEX::IComp, public ISerializable2
 		properties.operator<<(o);
 		return o;
 	}
-
 	friend nlohmann::json& operator<<(nlohmann::json& j, const IComp2& comp)
 	{
 		comp.operator<<(j);
@@ -814,8 +814,6 @@ void JsonDemo::LoadResources()
 }
 void JsonDemo::Update()
 {
-
-
 }
 void JsonDemo::Render()
 {
