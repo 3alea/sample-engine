@@ -56,17 +56,17 @@ namespace AEX
 	#pragma region// COMPONENT MANAGEMENT
 
 	// Find Component
-	u32 GameObject::GetCompCount()
+	u32 GameObject::GetCompCount() const
 	{
 		return mComps.size();
 	}
-	IComp* GameObject::GetComp(u32 index)
+	IComp* GameObject::GetComp(u32 index) const
 	{
 		if (index < GetCompCount())
 			return mComps[index];
 		return NULL;
 	}
-	IComp* GameObject::GetComp(const char * type)
+	IComp* GameObject::GetComp(const char * type) const
 	{
 		// go throught the components and look for the same type
 		for (auto it = mComps.begin(); it != mComps.end(); ++it)
@@ -77,7 +77,7 @@ namespace AEX
 		}
 		return NULL;
 	}
-	IComp* GameObject::GetComp(const Rtti & type)
+	IComp* GameObject::GetComp(const Rtti & type) const
 	{
 		// go throught the components and look for the same type
 		for (auto it = mComps.begin(); it != mComps.end(); ++it)
@@ -87,7 +87,7 @@ namespace AEX
 		}
 		return NULL;
 	}
-	IComp* GameObject::GetCompName(const char * compName, const char *compType)
+	IComp* GameObject::GetCompName(const char * compName, const char *compType) const
 	{
 		for (auto it = mComps.begin(); it != mComps.end(); ++it)
 		{

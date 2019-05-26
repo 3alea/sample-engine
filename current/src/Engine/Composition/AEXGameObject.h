@@ -31,11 +31,11 @@ namespace AEX
 		#pragma region// COMPONENT MANAGEMENT
 
 		// Getters
-		u32 GetCompCount();
-		IComp* GetComp(u32 index);
-		IComp* GetComp(const char * type);
-		IComp* GetComp(const Rtti & type);
-		IComp* GetCompName(const char * compName, const char *compType = NULL);
+		u32 GetCompCount() const;
+		IComp* GetComp(u32 index)const;
+		IComp* GetComp(const char * type)const;
+		IComp* GetComp(const Rtti & type)const;
+		IComp* GetCompName(const char * compName, const char *compType = NULL)const;
 
 		// template
 		template<class T>
@@ -66,7 +66,8 @@ namespace AEX
 
 
 		// debug only!!
-		std::vector<IComp*> &GetComps() { return mComps; }
+		std::vector<IComp*> &GetComps()  { return mComps; }
+		const std::vector<IComp*> &GetComps() const { return mComps; }
 
 	protected:
 		AEX_PTR_ARRAY(IComp) mComps;
