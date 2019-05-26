@@ -454,9 +454,9 @@ void TestStream()
 #include <unordered_map>
 struct ISerializable2
 {
-	virtual json& operator<< (json&j) = 0;
+	virtual json& operator<< (json&j) const = 0;
 	virtual void operator>>(json&j) = 0;
-	virtual std::ostream& operator << (std::ostream & o)
+	virtual std::ostream& operator << (std::ostream & o) const
 	{
 		return o;
 	}
@@ -467,7 +467,7 @@ class PROP_MAP : public ISerializable2
 public:
 	std::unordered_map<std::string, ISerializable2*> _props_;
 	// overload stream operators
-	friend nlohmann::json& operator<<(nlohmann::json& j, PROP_MAP& properties)
+	friend nlohmann::json& operator<<(nlohmann::json& j, const PROP_MAP& properties)
 	{
 		for (auto prop : properties._props_)
 		{
@@ -486,14 +486,14 @@ public:
 		}
 		return properties;
 	}
-	friend std::ostream& operator << (std::ostream & o, PROP_MAP& properties)
+	friend std::ostream& operator << (std::ostream & o, const PROP_MAP& properties)
 	{
 		json j;
 		o << properties.operator<<(j);
 
 		return o;
 	}
-	virtual json& operator<< (json&j)
+	virtual json& operator<< (json&j) const
 	{
 		for( auto prop : this->_props_)
 		{
@@ -508,7 +508,7 @@ public:
 			prop.second->operator>>(j[prop.first]);
 		}
 	}
-	virtual std::ostream& operator << (std::ostream & o)
+	virtual std::ostream& operator << (std::ostream & o) const
 	{
 		json j;
 		o << this->operator<<(j);
@@ -554,7 +554,7 @@ template <typename T> struct Property : public ISerializable2
 		return prop;
 	}
 
-	virtual json& operator<< (json&j)
+	virtual json& operator<< (json&j) const
 	{
 		j << val;
 		return j;
@@ -563,7 +563,7 @@ template <typename T> struct Property : public ISerializable2
 		j >> val;
 
 	}
-	//virtual std::ostream& operator << (std::ostream & o)
+	//virtual std::ostream& operator << (std::ostream & o)  const
 	//{
 	//	json j;
 	//	j << val;
@@ -614,7 +614,6 @@ void test_property_1()
 		cout << std::setw(4) << jcmp;
 	}
 };
-
 void test_property_2()
 {
 	// now we want to test the automatic serialization using
@@ -654,56 +653,57 @@ void test_property_2()
 		properties.operator<<(cout << std::setw(4));
 	}
 }
+struct IComp2 : public AEX::IComp, public ISerializable2
+{
+	PROP_MAP properties;
+
+	virtual json& operator<< (json&j)  const
+	{
+		properties.operator<< (j);
+		return j;
+	}
+	virtual void operator>>(json&j) {
+		properties.operator>>(j);
+	}
+	virtual std::ostream& operator << (std::ostream & o) const
+	{
+		properties.operator<<(o);
+		return o;
+	}
+
+	friend nlohmann::json& operator<<(nlohmann::json& j, const IComp2& comp)
+	{
+		comp.operator<<(j);
+		return j;
+	}
+	friend IComp2& operator>>(nlohmann::json& j, IComp2& comp)
+	{
+		comp.operator>>(j);
+		return comp;
+	}
+
+};
 void test_property_3()
 {
-	struct IComp2 : public AEX::IComp, public ISerializable2
-	{
-		PROP_MAP properties;
-
-		virtual json& operator<< (json&j)
-		{
-			j << properties;
-			properties.operator<< (j);
-			return j;
-		}
-		virtual void operator>>(json&j) {
-			properties.operator>>(j);
-
-		}
-		virtual std::ostream& operator << (std::ostream & o)
-		{
-			properties.operator<<(o << std::setw(4));
-			return o;
-		}
-
-	};
 
 	struct compA : public IComp2
 	{
 		PROP_VAL(int, life, 10);
 		PROP_VAL(bool, isDead, true);
-	};
-
-	struct compB : public IComp2
-	{
-		//enum Enum { enum_1, enum_2, enum_3 };
-		//PROP_VAL(Enum, myEnum, enum_2);
 		PROP_VAL(std::string, mName, "Billy Jean");
 	};
 
+
 	// inhertiance
-	struct compC : public compA
+	struct compB : public compA
 	{
 		PROP_VAL(float, ff, 2.45f);
-		//PROP(compA, a);
-		//PROP(compB, b);
 	};
 
 	// aggregation
-	struct compD : public IComp2
+	struct compC : public IComp2
 	{
-		PROP(compC, a);
-		//PROP(compB, b);
+		 PROP(compA, a); 
 	};
 
 	compA A;
