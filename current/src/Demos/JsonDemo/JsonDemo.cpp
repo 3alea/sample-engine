@@ -885,7 +885,7 @@ void test_property_2()
 
 */
 
-struct IComp3 : public AEX::IComp, public ISerializable2
+struct IComp3 : public IComp2
 {
 	PROP_MAP properties;
 
@@ -913,7 +913,12 @@ struct IComp3 : public AEX::IComp, public ISerializable2
 		comp.operator>>(j);
 		return comp;
 	}
-
+	friend std::ostream& operator << (std::ostream & o, const IComp3& comp)
+	{
+		json j;
+		comp.operator<<(j);
+		return o << j;
+	}
 };
 
 // basic usage
@@ -985,7 +990,7 @@ void test_property_3()
 
 }
 // -- test 4
-class GameObject3 : public AEX::GameObject, public ISerializable2
+class GameObject3 : public GameObject2
 {
 public:
 	PROP_MAP properties; 
@@ -994,28 +999,8 @@ public:
 		// serialize properties
 		properties.operator<< (j);
 
-		// serialize name (todo: implement this as a Property). 
-		j["name"] = mName;
-
-		// serialize components
-		json & comps = j["comps"];
-		for (u32 i = 0; i < this->GetComps().size(); ++i)
-		{
-			json compJson;
-			IComp * comp = GetComp(i);
-			compJson["__type"] = comp->GetType().GetName();
-			
-			// write the component  using stream operators
-
-			// note only IComp3 implement it
-			if (auto comp2 = dynamic_cast<IComp3*>(comp))
-			{
-				comp2->operator<<(compJson);
-			}
-
-			// add to json array
-			comps.push_back(compJson);
-		}
+		// serialize as GameObject2
+		GameObject2::operator<<(j);
 
 		return j;
 	}
@@ -1024,34 +1009,8 @@ public:
 		// read properties
 		properties.operator>>(j);
 
-		// get components
-		Shutdown(); // clear everything before loading. 
-
-		// read name (this should really be another property).
-		SetName(j["name"].get<std::string>().c_str());
-
-		// read comps and allocate them
-		json & comps = *j.find("comps");
-		for (auto it = comps.begin(); it != comps.end(); ++it)
-		{
-			// get json object for that component
-			json & compJson = *it;
-
-			// read type and create with factory
-			std::string typeName = compJson["__type"].get<std::string>();
-			IBase * newComp = aexFactory->Create(typeName.c_str());
-
-			// error check - Factory couldn't allocate memory
-			if (newComp == nullptr)
-				continue;
-
-			// only stream components deriving from IComp3
-			if (auto comp2 = dynamic_cast<IComp3*>(newComp))
-				comp2->operator>>(compJson);
-
-			// add new comp object
-			AddComp((IComp*)newComp);
-		}
+		// serialize as GameObject2
+		GameObject2::operator>>(j);
 	}
 	virtual std::ostream& operator << (std::ostream & o) const
 	{
@@ -1069,24 +1028,39 @@ public:
 		obj.operator>>(j);
 		return obj;
 	}
+	friend std::ostream& operator << (std::ostream & o, const GameObject3& obj)
+	{
+		json j;
+		obj.operator<<(j);
+		return o << j;
+	}
 };
 void test_property_object()
 {
-	cout << "--------------TEST WRITE-----------------\n";
-	// test write
-	GameObject3 go;
-	go.NewComp<compA>();
-	go.NewComp<compB>();
-	go.NewComp<compC>();
-	go.operator<<(cout << std::setw(4));
-
-	cout << "--------------TEST READ -----------------\n";
-	
 	// register comps
 	aexFactory->Register<compA>();
 	aexFactory->Register<compB>();
 	aexFactory->Register<compC>();
+
+	cout << "\n--------------TEST WRITE-----------------\n";
+
+	GameObject3 go;
+	go.NewComp<compA>();
+	go.NewComp<compB>();
+	go.NewComp<compC>();
+	cout << std::setw(4) << go;
+
+	cout << "\n--------------TEST READ -----------------\n";
 	
+	compA a;
+	a.life = 6565;
+	a.isDead = false;
+	a.name = "Tiko";
+
+	// modify object
+	go.GetComp<compA>()->life = 66666;
+	go.GetComp<compC>()->a = a; // change value completely. 
+
 	// write first object to json
 	json j;
 	go.operator<<(j);
@@ -1094,7 +1068,7 @@ void test_property_object()
 	// stream json into new object and print
 	GameObject3 go2;
 	go2.operator>>(j);
-	go2.operator<<(cout << std::setw(4));
+	cout << std::setw(4) << go2;
 
 }
 #pragma endregion
@@ -1105,11 +1079,11 @@ void JsonDemo::Initialize()
 {
 	//Test_SerializeJsonObject();		// test factory
 	//test_stream();					// test stream API
-	test_stream_object();				// test tream API with Facory system
+	//test_stream_object();				// test tream API with Facory system
 	//test_property_1();				// basic property usage
 	//test_property_2();				// simple automatic serialization 
 	//test_property_3();				// property composition
-	//test_property_object();		// GameObjectserialization
+	test_property_object();				// properties with game objects 
 	cout << "\n\n\n\n";
 	exit(1);
 }
